@@ -9,7 +9,6 @@
  */
 
 import type { GithubCommit } from '$lib/types';
-import type { PageServerLoad } from './$types.js';
 
 /**
  * SvelteKit's load function that fetches commit data based on URL query
@@ -17,7 +16,7 @@ import type { PageServerLoad } from './$types.js';
  * @param {URL} event.url - Contains the URL of the current request, including search parameters.
  * @returns {Promise<{commits: GithubCommit[], error: string | null}>}
  */
-export const load: PageServerLoad = async ({
+export const load = async ({
 	url
 }: {
 	url: URL;
@@ -29,21 +28,29 @@ export const load: PageServerLoad = async ({
 	}
 
 	try {
+		const parsedUrl = new URL(repoUrl);
+		if (parsedUrl.host !== 'github.com') {
+			throw new Error('Invalid Link. Only github.com URLs are accepted');
+		}
+
 		// Parsing / Formatting the URL here.. IDK if I needed to comment that
-		const urlParts = repoUrl.split('/');
-		const owner = urlParts[urlParts.length - 2];
-		const repo = urlParts[urlParts.length - 1];
+		const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
+		const owner = pathSegments[0];
+		const repo = pathSegments[1];
+
+		if (!owner || !repo) {
+			throw new Error('Could not parse owner and repo from URL.');
+		}
 
 		// Build url for API and fetch data
 		const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=100`;
 		const response = await fetch(apiUrl);
 		if (!response.ok) {
-			return { commits: [], error: 'Failed to fetch data. Check repository URL.' };
+			return { commits: [], error: `Failed to fetch data: ${response.statusText}` };
 		}
 		const commits = (await response.json()) as GithubCommit[];
-
 		return { commits: commits, error: null };
-	} catch (e) {
-		return { commits: [], error: 'Invalid URL provided.' };
+	} catch (e: any) {
+		return { commits: [], error: e.message || 'Unknown Error occured' };
 	}
 };
