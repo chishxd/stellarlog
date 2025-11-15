@@ -27,9 +27,11 @@
 			commitData: GithubCommit[];
 
 			starfield: Phaser.GameObjects.TileSprite | null = null;
+			player: Phaser.GameObjects.Sprite | null = null;
 
 			preload() {
 				this.load.image('starfield', '/starfield.png');
+				this.load.image('ship', '/ship.png');
 			}
 
 			constructor() {
@@ -42,10 +44,12 @@
 			create() {
 				this.starfield = this.add.tileSprite(400, 300, 800, 600, 'starfield');
 
+				// Basic Stuff
 				this.cameras.main.setBackgroundColor('#000000');
 				const startX = 50;
 				const spacingX = 15;
 
+				// Logic to render stars
 				this.commitData.forEach((commit, index) => {
 					const x = startX + index * spacingX;
 					const y = PhaserDefault.Math.Between(200, 400);
@@ -54,6 +58,15 @@
 					const star = this.add.circle(x, y, radius, 0xffffff);
 					star.setAlpha(alpha);
 				});
+
+				if (this.commitData.length > 0) {
+					const lastCommit = 0;
+					const startX = 50 + lastCommit * 15;
+					const startY = 250;
+
+					this.player = this.add.sprite(startX, startY, 'ship');
+					this.player.setScale(0.6);
+				}
 			}
 
 			update() {
