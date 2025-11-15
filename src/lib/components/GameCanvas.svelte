@@ -1,4 +1,3 @@
-<!-- src/lib/components/GameCanvas.svelte -->
 <script lang="ts">
 	import type { GithubCommit } from '$lib/types';
 	import { onDestroy } from 'svelte';
@@ -55,8 +54,24 @@
 					const y = PhaserDefault.Math.Between(200, 400);
 					const radius = PhaserDefault.Math.FloatBetween(1, 3.5);
 					const alpha = PhaserDefault.Math.FloatBetween(0.5, 1.0);
+
 					const star = this.add.circle(x, y, radius, 0xffffff);
 					star.setAlpha(alpha);
+
+					star.setInteractive({ useHandCursor: true });
+
+					star.on('pointerdown', () => {
+						if (this.player) {
+							console.log(`Moving to commit: ${commit.sha}`);
+							this.tweens.add({
+								targets: this.player,
+								x: star.x,
+								y: star.y - 20,
+								duration: 400,
+								ease: 'Power2'
+							});
+						}
+					});
 				});
 
 				if (this.commitData.length > 0) {
