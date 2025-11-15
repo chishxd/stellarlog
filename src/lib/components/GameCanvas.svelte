@@ -1,76 +1,81 @@
+<!-- src/lib/components/GameCanvas.svelte -->
 <script lang="ts">
 	import type { GithubCommit } from '$lib/types';
-	import { onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
+	import type Phaser from 'phaser';
 
 	export let commits: GithubCommit[] = [];
-
 	let GameScene: any;
 
-	onMount(() => {
-		let game: Phaser.Game | null = null;
+	let game: Phaser.Game | null = null;
+	let gameContainer: HTMLDivElement;
 
-		(async () => {
-			const PhaserDefault = (await import('phaser')).default;
+	const handleLifecycle = async (targetDiv: HTMLDivElement, commitData: GithubCommit[]) => {
+		if (game) {
+			game.destroy(true);
+			game = null;
+		}
 
-			// This is the only place I ASKED ai how can I declare a class which requires contents from dynamically imported stuff
-			GameScene = class extends PhaserDefault.Scene {
-				commitData: GithubCommit[];
+		if (!commitData || commitData.length === 0) {
+			return;
+		}
 
-				constructor() {
-					super({ key: 'GameScene' });
-					this.commitData = [];
-				}
+		const PhaserDefault = (await import('phaser')).default;
 
-				init(data: { commits: GithubCommit[] }) {
-					console.log('Phaser scene has been initialized with data.', data);
-					this.commitData = data.commits;
-				}
+		GameScene = class extends PhaserDefault.Scene {
+			commitData: GithubCommit[];
+			constructor() {
+				super({ key: 'GameScene' });
+				this.commitData = [];
+			}
+			init(data: { commits: GithubCommit[] }) {
+				this.commitData = data.commits;
+			}
+			create() {
+				this.cameras.main.setBackgroundColor('#000000');
+				const startX = 50;
+				const spacingX = 15;
 
-				create() {
-					console.log('Phaser `create` method is running.');
-					this.cameras.main.setBackgroundColor('#000000');
-
-					// Rendering logic for stars reside below this comment
-					const startX = 50;
-					const spacingX = 15;
-					const y = 300;
-					const radius = 4;
-					const color = 0xffffff;
-
-					this.commitData.forEach((commit, index) => {
-						const x = startX + index * spacingX;
-
-						this.add.circle(x, y, radius, color);
-					});
-				}
-			};
-
-			const config: Phaser.Types.Core.GameConfig = {
-				type: PhaserDefault.AUTO,
-				width: 800,
-				height: 600,
-				parent: 'game-container',
-				backgroundColor: '#1a1a1a',
-				scene: GameScene
-			};
-			game = new PhaserDefault.Game(config);
-			game.scene.start('GameScene', { commits: commits });
-		})();
-
-		return () => {
-			if (game) {
-				console.log('Destroying Phaser game instance.');
-				game.destroy(true);
-				game = null;
+				this.commitData.forEach((commit, index) => {
+					const x = startX + index * spacingX;
+					const y = PhaserDefault.Math.Between(200, 400);
+					const radius = PhaserDefault.Math.FloatBetween(1, 3.5);
+					const alpha = PhaserDefault.Math.FloatBetween(0.5, 1.0);
+					const star = this.add.circle(x, y, radius, 0xffffff);
+					star.setAlpha(alpha);
+				});
 			}
 		};
+
+		const config: Phaser.Types.Core.GameConfig = {
+			type: PhaserDefault.AUTO,
+			width: 800,
+			height: 600,
+			parent: targetDiv,
+			backgroundColor: '#1a1a1a',
+			scene: GameScene
+		};
+
+		game = new PhaserDefault.Game(config);
+		game.scene.start('GameScene', { commits: commitData });
+	};
+
+	$: if (commits && gameContainer) {
+		handleLifecycle(gameContainer, commits);
+	}
+
+	onDestroy(() => {
+		if (game) {
+			game.destroy(true);
+			game = null;
+		}
 	});
 </script>
 
-<div id="game-container"></div>
+<div bind:this={gameContainer}></div>
 
 <style>
-	#game-container {
+	div {
 		width: 800px;
 		height: 600px;
 		margin: 20px auto;
