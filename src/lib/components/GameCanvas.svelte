@@ -22,8 +22,16 @@
 
 		const PhaserDefault = (await import('phaser')).default;
 
+		// I HATE JS :HEAVYSOB:
 		GameScene = class extends PhaserDefault.Scene {
 			commitData: GithubCommit[];
+
+			starfield: Phaser.GameObjects.TileSprite | null = null;
+
+			preload() {
+				this.load.image('starfield', '/starfield.png');
+			}
+
 			constructor() {
 				super({ key: 'GameScene' });
 				this.commitData = [];
@@ -32,6 +40,8 @@
 				this.commitData = data.commits;
 			}
 			create() {
+				this.starfield = this.add.tileSprite(400, 300, 800, 600, 'starfield');
+
 				this.cameras.main.setBackgroundColor('#000000');
 				const startX = 50;
 				const spacingX = 15;
@@ -44,6 +54,12 @@
 					const star = this.add.circle(x, y, radius, 0xffffff);
 					star.setAlpha(alpha);
 				});
+			}
+
+			update() {
+				if (this.starfield) {
+					this.starfield.tilePositionX += 0.5;
+				}
 			}
 		};
 
