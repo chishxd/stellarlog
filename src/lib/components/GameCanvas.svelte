@@ -3,12 +3,66 @@
 	import { onDestroy } from 'svelte';
 	// import Phaser from 'phaser';
 	import { selectedCommit } from '$lib/stores';
+	import { time } from 'console';
 
 	export let commits: GithubCommit[] = [];
 	let GameScene: any;
 
 	let game: Phaser.Game | null = null;
 	let gameContainer: HTMLDivElement;
+
+	const layoutCommitGraph = (commits: GithubCommit[]) => {
+		const positionedCommits = new Map<string, { commit: GithubCommit; x: number; y: number }>();
+		const lanes: (string | null)[] = [];
+
+		const sortedCommits = [...commits].reverse();
+
+		sortedCommits.forEach((commit, timeIndex) => {
+			let assignedLane = -1;
+
+			// Find a commit that fits this lane
+			// A commit fits the lane if it's parent is at end of the lane
+			for (let i = 0; i < lanes.length; i++) {
+				if (lanes[i] === commit.parents[0].sha) {
+					lanes[i] = commit.sha;
+					assignedLane = i;
+					break;
+				}
+			}
+
+			// If no lane found, it's a new branch, so find some empty
+			if (assignedLane === -1) {
+				for (let i = 0; i < lanes.length; i++) {
+					if (lanes[i] === null) {
+						lanes[i] = commit.sha;
+						assignedLane = i;
+						break;
+					}
+				}
+			}
+
+			// If still no lane is found, create new one
+			if (assignedLane === -1) {
+				lanes.push(commit.sha);
+				assignedLane = lanes.length - 1;
+			}
+
+			positionedCommits.set(commit.sha, {
+				commit,
+				x: 50 + assignedLane * 40,
+				y: 50 + timeIndex * 30
+			});
+
+			if (commit.parents.length > 0) {
+				for (let i = 0; i < lanes.length; i++) {
+					if (i !== assignedLane && lanes[i] === commit.parents[0].sha) {
+						lanes[i] = null;
+					}
+				}
+			}
+		});
+		return positionedCommits;
+	};
 
 	const handleLifecycle = async (targetDiv: HTMLDivElement, commitData: GithubCommit[]) => {
 		if (game) {
