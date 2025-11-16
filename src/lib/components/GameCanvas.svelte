@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { GithubCommit } from '$lib/types';
 	import { onDestroy } from 'svelte';
-	import type Phaser from 'phaser';
+	// import Phaser from 'phaser';
 	import { selectedCommit } from '$lib/stores';
 
 	export let commits: GithubCommit[] = [];
@@ -42,17 +42,23 @@
 				this.commitData = data.commits;
 			}
 			create() {
-				this.starfield = this.add.tileSprite(400, 300, 800, 600, 'starfield');
+				this.starfield = this.add.tileSprite(
+					this.scale.width / 2,
+					this.scale.height / 2,
+					this.scale.width,
+					this.scale.height,
+					'starfield'
+				);
 
 				// Basic Stuff
 				this.cameras.main.setBackgroundColor('#000000');
 				const startX = 50;
-				const spacingX = 15;
+				const spacingX = (this.scale.width - 100) / this.commitData.length;
 
 				// Logic to render stars
 				this.commitData.forEach((commit, index) => {
 					const x = startX + index * spacingX;
-					const y = PhaserDefault.Math.Between(200, 400);
+					const y = PhaserDefault.Math.Between(this.scale.height * 0.2, this.scale.height * 0.8);
 					const radius = PhaserDefault.Math.FloatBetween(1, 3.5);
 					const alpha = PhaserDefault.Math.FloatBetween(0.5, 1.0);
 
@@ -97,10 +103,13 @@
 
 		const config: Phaser.Types.Core.GameConfig = {
 			type: PhaserDefault.AUTO,
-			width: 800,
-			height: 600,
+			width: '100%',
+			height: '100%',
+			scale: {
+				mode: PhaserDefault.Scale.RESIZE
+			},
 			parent: targetDiv,
-			backgroundColor: '#1a1a1a',
+			backgroundColor: '#000000',
 			scene: GameScene
 		};
 
@@ -124,9 +133,9 @@
 
 <style>
 	div {
-		width: 800px;
-		height: 600px;
-		margin: 20px auto;
-		border: 1px solid #333;
+		width: 100%;
+		height: 100%;
+		margin: 0;
+		border: none;
 	}
 </style>

@@ -8,24 +8,21 @@
 	$: console.log('Page data:', data);
 </script>
 
-{#if data?.error}
-	<p style="color: red;">Error: {data.error}</p>
-{/if}
-
 {#if data?.commits && data.commits.length > 0}
-	<p>Successfully found {data.commits.length} commits. The game canvas is now active.</p>
+	<!-- <p>Successfully found {data.commits.length} commits. The game canvas is now active.</p> -->
 	<GameCanvas commits={data.commits} />
 {:else if !data?.error && data?.commits}
-	<p>No commits found. Try a different repository.</p>
+	<div class="flex h-full w-full items-center justify-center font-mono text-slate-500">
+		{data?.commits
+			? 'No commits found. Try a different repository.'
+			: 'Enter a repository URL to begin your journey.'}
+	</div>
+{/if}
+
+{#if data?.error}
+	<div class="flex h-full w-full items-center justify-center font-mono text-red-400">
+		<p>Error: {data.error}</p>
+	</div>
 {/if}
 
 <CommitInfo />
-
-<style>
-	* {
-		padding: 5px;
-	}
-	p {
-		color: green;
-	}
-</style>
