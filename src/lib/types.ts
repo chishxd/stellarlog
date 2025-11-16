@@ -16,4 +16,9 @@ export interface GithubCommit {
 		additions: number;
 		deletions: number;
 	};
+	parents: {
+		sha: string;
+		url: string;
+		html_url: string;
+	}[];
 }
