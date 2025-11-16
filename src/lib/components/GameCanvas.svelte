@@ -59,7 +59,10 @@
 				this.commitData.forEach((commit, index) => {
 					const x = startX + index * spacingX;
 					const y = PhaserDefault.Math.Between(this.scale.height * 0.2, this.scale.height * 0.8);
-					const radius = PhaserDefault.Math.FloatBetween(2.5, 5.0);
+					const totalChanges = commit.stats.total;
+					const cappedChanges = Math.min(totalChanges, 500);
+
+					const radius = PhaserDefault.Math.Linear(2, 8, cappedChanges / 500);
 					const alpha = PhaserDefault.Math.FloatBetween(0.7, 1.0);
 
 					const star = this.add.circle(x, y, radius, 0xffffff);

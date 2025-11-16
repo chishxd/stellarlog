@@ -42,14 +42,22 @@ export const load = async ({
 			throw new Error('Could not parse owner and repo from URL.');
 		}
 
-		// Build url for API and fetch data
-		const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=100`;
-		const response = await fetch(apiUrl);
-		if (!response.ok) {
-			return { commits: [], error: `Failed to fetch data: ${response.statusText}` };
+		// Build url for API and fetch commit data
+		const listApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=50`;
+		const listResponse = await fetch(listApiUrl);
+		if (!listResponse.ok) {
+			return { commits: [], error: `Failed to fetch data: ${listResponse.statusText}` };
 		}
-		const commits = (await response.json()) as GithubCommit[];
-		return { commits: commits, error: null };
+		const commitList = (await listResponse.json()) as { sha: string }[];
+
+		const commitPromises = commitList.map(async (items) => {
+			const detailApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${items.sha}`;
+			return fetch(detailApiUrl).then((res) => res.json());
+		});
+
+		const commitStats = (await Promise.all(commitPromises)) as GithubCommit[];
+
+		return { commits: commitStats, error: null };
 	} catch (e: any) {
 		return { commits: [], error: e.message || 'Unknown Error occured' };
 	}
