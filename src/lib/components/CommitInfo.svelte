@@ -8,9 +8,19 @@
 	>
 		<div class="shrink-0">
 			<h3 class="text-sm font-semibold tracking-wider text-slate-400 uppercase">COMMIT INFO</h3>
-			<p class="mt-2 truncate text-xs text-slate-500">
-				{$selectedCommit?.sha.substring(0, 7)}
-			</p>
+			<div class="mt-2 flex items-center justify-between">
+				<p class="truncate text-xs text-slate-500">
+					{$selectedCommit?.sha.substring(0, 7)}
+				</p>
+				<div class="flex gap-4 text-xs font-semibold">
+					<span class="text-green-400">
+						+{$selectedCommit?.stats.additions}
+					</span>
+					<span class="text-red-400">
+						-{$selectedCommit?.stats.deletions}
+					</span>
+				</div>
+			</div>
 		</div>
 
 		<p class="text-slate-200s mt-1 min-h-0 grow overflow-y-auto text-base">
