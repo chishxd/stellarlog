@@ -9,6 +9,7 @@
  */
 
 import type { GithubCommit } from '$lib/types';
+import { GITHUB_TOKEN } from '$env/static/private';
 
 /**
  * SvelteKit's load function that fetches commit data based on URL query
@@ -38,13 +39,18 @@ export const load = async ({
 		const owner = pathSegments[0];
 		const repo = pathSegments[1];
 
+		const headers = {
+			Authorization: `Bearer ${GITHUB_TOKEN}`
+		};
+
 		if (!owner || !repo) {
 			throw new Error('Could not parse owner and repo from URL.');
 		}
 
 		// Build url for API and fetch commit data
 		const listApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=50`;
-		const listResponse = await fetch(listApiUrl);
+		const listResponse = await fetch(listApiUrl, { headers });
+		
 		if (!listResponse.ok) {
 			return { commits: [], error: `Failed to fetch data: ${listResponse.statusText}` };
 		}
@@ -52,7 +58,7 @@ export const load = async ({
 
 		const commitPromises = commitList.map(async (items) => {
 			const detailApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${items.sha}`;
-			return fetch(detailApiUrl).then((res) => res.json());
+			return fetch(detailApiUrl, { headers }).then((res) => res.json());
 		});
 
 		const commitStats = (await Promise.all(commitPromises)) as GithubCommit[];
