@@ -8,14 +8,6 @@
 	$: console.log('Page data:', data);
 </script>
 
-<h1>StellarLog</h1>
-<p>Welcome to StellarLog! Please enter the GitHub repo url here</p>
-
-<form method="get" action="">
-	<input name="repo" type="text" placeholder="https://github.com/owner/repo" required />
-	<button type="submit">Launch</button>
-</form>
-
 {#if data?.error}
 	<p style="color: red;">Error: {data.error}</p>
 {/if}
@@ -28,3 +20,12 @@
 {/if}
 
 <CommitInfo />
+
+<style>
+	* {
+		padding: 5px;
+	}
+	p {
+		color: green;
+	}
+</style>
