@@ -70,6 +70,25 @@
 
 					star.setInteractive({ useHandCursor: true });
 
+					// if (totalChanges > 200) {
+					// 	const glowColor = 0xfff00;
+					// 	const outerGlow = this.add.circle(x, y, radius * 2, glowColor, 0.3);
+					// 	const innerGlow = this.add.circle(x, y, radius * 1.5, glowColor, 0.5);
+					// }
+
+					if (totalChanges > 150 && star.postFX) {
+						const glowPipeline = star.postFX.addGlow(0xffff00, 1, 0, false, 0.1);
+
+						this.tweens.add({
+							targets: glowPipeline,
+							outerStrength: 4,
+							yoyo: true,
+							repeat: -1,
+							ease: 'sine-out',
+							duration: PhaserDefault.Math.Between(1500, 2500)
+						});
+					}
+
 					const hitArea = new PhaserDefault.Geom.Circle(0, 0, 15);
 					star.setInteractive('hitArea', PhaserDefault.Geom.Circle.Contains);
 
