@@ -7,6 +7,8 @@ A web-game made with **Phaser**, **SvelteKit** and **TailwindCSS**
 
 <!-- TODO: Add GIF for Project -->
 
+[Try Live Demo](https://stellarlog.vercel.app)
+
 ![hackatime badge](https://hackatime-badge.hackclub.com/U093R4FFTB6/stellarlog)
 
 ---
