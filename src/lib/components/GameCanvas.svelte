@@ -59,13 +59,16 @@
 				this.commitData.forEach((commit, index) => {
 					const x = startX + index * spacingX;
 					const y = PhaserDefault.Math.Between(this.scale.height * 0.2, this.scale.height * 0.8);
-					const radius = PhaserDefault.Math.FloatBetween(1, 3.5);
-					const alpha = PhaserDefault.Math.FloatBetween(0.5, 1.0);
+					const radius = PhaserDefault.Math.FloatBetween(2.5, 5.0);
+					const alpha = PhaserDefault.Math.FloatBetween(0.7, 1.0);
 
 					const star = this.add.circle(x, y, radius, 0xffffff);
 					star.setAlpha(alpha);
 
 					star.setInteractive({ useHandCursor: true });
+
+					const hitArea = new PhaserDefault.Geom.Circle(0, 0, 15);
+					star.setInteractive('hitArea', PhaserDefault.Geom.Circle.Contains);
 
 					star.on('pointerdown', () => {
 						selectedCommit.set(commit);
