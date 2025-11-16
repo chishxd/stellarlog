@@ -5,7 +5,7 @@ A web-game made with **Phaser**, **SvelteKit** and **TailwindCSS**
 
 ![Svelte Badge](https://img.shields.io/badge/Svelte-FF3E00?logo=svelte&logoColor=fff&style=for-the-badge)![Hack Club Badge](https://img.shields.io/badge/Hack%20Club-EC3750?logo=hackclub&logoColor=fff&style=for-the-badge)![TypeScript Badge](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=fff&style=for-the-badge)
 
-<!-- TODO: Add GIF for Project -->
+![demo](demo.gif)
 
 [Try Live Demo](https://stellarlog.vercel.app)
 
