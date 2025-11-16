@@ -10,7 +10,7 @@
 	let game: Phaser.Game | null = null;
 	let gameContainer: HTMLDivElement;
 
-	const layoutCommitGraph = (commits: GithubCommit[]) => {
+	const layoutCommitGraph = (commits: GithubCommit[], canvasHeight: number = 600) => {
 		const positionedCommits = new Map<string, { commit: GithubCommit; x: number; y: number }>();
 		const lanes: (string | null)[] = [];
 
@@ -62,7 +62,31 @@
 				}
 			}
 		});
-		return positionedCommits;
+
+		if (positionedCommits.size === 0) {
+			return positionedCommits;
+		}
+
+		// Find min and max of the graph
+		let minY = Infinity;
+		let maxY = -Infinity;
+		for (const node of positionedCommits.values()) {
+			if (node.y < minY) minY = node.y;
+			if (node.y > maxY) maxY = node.y;
+		}
+
+		const graphHeight = maxY - minY;
+		const offsetY = (canvasHeight - graphHeight) / 2 - minY;
+
+		const centeredCommits = new Map<string, { commit: GithubCommit; x: number; y: number }>();
+		positionedCommits.forEach((node, sha) => {
+			centeredCommits.set(sha, {
+				...node,
+				y: node.y + offsetY
+			});
+		});
+
+		return centeredCommits;
 	};
 
 	const handleLifecycle = async (targetDiv: HTMLDivElement, commitData: GithubCommit[]) => {
@@ -196,6 +220,9 @@
 			}
 		};
 
+		const canvasHeight = targetDiv.clientHeight || 600;
+		const positionedCommits = layoutCommitGraph(commitData, canvasHeight);
+
 		const config: Phaser.Types.Core.GameConfig = {
 			type: PhaserDefault.AUTO,
 			width: '100%',
@@ -207,8 +234,6 @@
 			backgroundColor: '#000000',
 			scene: GameScene
 		};
-
-		const positionedCommits = layoutCommitGraph(commitData);
 
 		game = new PhaserDefault.Game(config);
 		game.scene.start('GameScene', { positionedCommits: positionedCommits });
