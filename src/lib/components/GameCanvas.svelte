@@ -137,9 +137,9 @@
 
 				this.visibleLines = this.add.graphics();
 				this.cameras.main.setBackgroundColor('#000000');
+				let firstNode = null;
 
 				if (this.positionedCommits.size > 0) {
-					let firstNode: { commit: GithubCommit; x: number; y: number } | undefined = undefined;
 					let lowestX = Infinity;
 					this.positionedCommits.forEach((node) => {
 						if (node.x < lowestX) {
@@ -148,13 +148,45 @@
 						}
 					});
 
+					let maxX = -Infinity;
+					let maxY = -Infinity;
+					this.positionedCommits.forEach((node) => {
+						if (node.x > maxX) maxX = node.x;
+						if (node.y > maxY) maxY = node.y;
+					});
+
+					this.cameras.main.setBounds(0, 0, maxX + 200, maxY + 200);
+
 					if (firstNode) {
-						// This is your correct player creation logic
-						this.player = this.add.sprite(firstNode.x, firstNode.y - 30, 'ship');
+						this.player = this.add.sprite(firstNode.x, firstNode.y - 30, 'ship'); //WHY THE FUCK WON'T THIS ERROR
 						this.player.setAngle(0);
 						this.player.setScale(0.6);
 					}
 				}
+
+				this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+					const newZoom = this.cameras.main.zoom - deltaY * 0.0015;
+					this.cameras.main.zoom = Phaser.Math.Clamp(newZoom, 0.2, 2.5);
+
+					this.updateVisibleObjects();
+				});
+
+				this.input.on('pointermove', (pointer) => {
+					if (!pointer.isDown) return;
+
+					this.cameras.main.scrollX -=
+						(pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
+					this.cameras.main.scrollY -=
+						(pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+				});
+
+				if (firstNode) {
+					this.cameras.main.centerOn(firstNode.x, firstNode.y);
+				}
+
+				// Set up the trigger and perform the initial draw
+				this.cameras.main.on('move', () => this.updateVisibleObjects());
+				this.updateVisibleObjects();
 
 				this.cameras.main.on('move', () => this.updateVisibleObjects());
 
