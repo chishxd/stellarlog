@@ -107,6 +107,8 @@
 
 			starfield: Phaser.GameObjects.TileSprite | null = null;
 			player: Phaser.GameObjects.Sprite | null = null;
+			visibleStars: Map<string, Phaser.GameObjects.Arc> = new Map();
+			visibleLines: Phaser.GameObjects.Graphics | null = null;
 
 			positionedCommits: Map<string, { commit: GithubCommit; x: number; y: number }> = new Map();
 
@@ -117,7 +119,6 @@
 
 			constructor() {
 				super({ key: 'GameScene' });
-				// this.commitData = [];
 			}
 			init(data: {
 				positionedCommits: Map<string, { commit: GithubCommit; x: number; y: number }>;
@@ -134,83 +135,103 @@
 					'starfield'
 				);
 
-				// background Rendering Stuff
+				this.visibleLines = this.add.graphics();
 				this.cameras.main.setBackgroundColor('#000000');
-				const startX = 50;
-				const spacingX = (this.scale.width - 100) / this.positionedCommits.size;
-
-				const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0x444444 } });
-
-				// Logic to render stars
-				this.positionedCommits.forEach(({ commit, x, y }) => {
-					// const x = startX + index * spacingX;
-					// const y = PhaserDefault.Math.Between(this.scale.height * 0.2, this.scale.height * 0.8);
-
-					commit.parents.forEach((parent) => {
-						const parentNode = this.positionedCommits.get(parent.sha);
-						if (parentNode) {
-							graphics.lineBetween(x, y, parentNode.x, parentNode.y);
-						}
-					});
-
-					const totalChanges = commit.stats.total;
-					const cappedChanges = Math.min(totalChanges, 500);
-
-					const radius = PhaserDefault.Math.Linear(2, 8, cappedChanges / 500);
-					const alpha = PhaserDefault.Math.FloatBetween(0.7, 1.0);
-
-					const star = this.add.circle(x, y, radius, 0xffffff);
-					star.setAlpha(alpha);
-
-					star.setInteractive({ useHandCursor: true });
-
-					// if (totalChanges > 200) {
-					// 	const glowColor = 0xfff00;
-					// 	const outerGlow = this.add.circle(x, y, radius * 2, glowColor, 0.3);
-					// 	const innerGlow = this.add.circle(x, y, radius * 1.5, glowColor, 0.5);
-					// }
-
-					if (totalChanges > 150 && star.postFX) {
-						const glowPipeline = star.postFX.addGlow(0xffff00, 1, 0, false, 0.1);
-
-						this.tweens.add({
-							targets: glowPipeline,
-							outerStrength: 4,
-							yoyo: true,
-							repeat: -1,
-							ease: 'sine-out',
-							duration: PhaserDefault.Math.Between(1500, 2500)
-						});
-					}
-
-					const hitArea = new PhaserDefault.Geom.Circle(0, 0, 15);
-					star.setInteractive(hitArea, PhaserDefault.Geom.Circle.Contains);
-
-					star.on('pointerdown', () => {
-						selectedCommit.set(commit);
-						if (this.player) {
-							console.log(`Moving to commit: ${commit.sha}`);
-
-							// The animation
-							this.tweens.add({
-								targets: this.player,
-								x: star.x,
-								y: star.y - 20,
-								duration: 400,
-								ease: 'Power2'
-							});
-						}
-					});
-				});
 
 				if (this.positionedCommits.size > 0) {
-					const lastCommit = 0;
-					const startX = 50 + lastCommit * 15;
-					const startY = 250;
+					let startNode: { commit: GithubCommit; x: number; y: number } | undefined = undefined;
+					let highestX = -Infinity;
+					this.positionedCommits.forEach((node) => {
+						if (node.x > highestX) {
+							highestX = node.x;
+							startNode = node;
+						}
+					});
 
-					this.player = this.add.sprite(startX, startY, 'ship');
-					this.player.setScale(0.6);
+					if (startNode) {
+						// This is your correct player creation logic
+						this.player = this.add.sprite(startNode.x, startNode.y - 20, 'ship');
+						this.player.setAngle(180);
+						this.player.setScale(0.6);
+					}
 				}
+
+				this.cameras.main.on('move', () => this.updateVisibleObjects());
+
+				// background Rendering Stuff
+				this.updateVisibleObjects();
+			}
+
+			updateVisibleObjects() {
+				if (!this.visibleLines) return;
+
+				const cameraBounds = this.cameras.main.worldView;
+
+				// This part destroys off-screen stars
+				this.visibleStars.forEach((star, sha) => {
+					if (!PhaserDefault.Geom.Rectangle.Overlaps(cameraBounds, star.getBounds())) {
+						star.destroy();
+						this.visibleStars.delete(sha);
+					}
+				});
+				this.visibleLines.clear();
+
+				// Create only on camera objects
+				this.positionedCommits.forEach(({ commit, x, y }) => {
+					if (cameraBounds.contains(x, y)) {
+						this.visibleLines?.lineStyle(1, 0x444444);
+						commit.parents.forEach((parent) => {
+							const parentNode = this.positionedCommits.get(parent.sha);
+							if (parentNode) {
+								this.visibleLines?.lineBetween(x, y, parentNode.x, parentNode.y);
+							}
+						});
+
+						if (!this.visibleStars.has(commit.sha)) {
+							const totalChanges = commit.stats.total;
+							const cappedChanges = Math.min(totalChanges, 500);
+							const radius = PhaserDefault.Math.Linear(2, 6, cappedChanges / 500);
+
+							const star = this.add.circle(x, y, radius, 0xffffff);
+
+							star.setInteractive({ useHandCursor: true });
+
+							if (totalChanges > 150 && star.postFX) {
+								const glowPipeline = star.postFX.addGlow(0xffff00, 1, 0, false, 0.1);
+
+								this.tweens.add({
+									targets: glowPipeline,
+									outerStrength: 4,
+									yoyo: true,
+									repeat: -1,
+									ease: 'sine-out',
+									duration: PhaserDefault.Math.Between(1500, 2500)
+								});
+							}
+
+							const hitArea = new PhaserDefault.Geom.Circle(0, 0, 15);
+							star.setInteractive(hitArea, PhaserDefault.Geom.Circle.Contains);
+							star.on('pointerdown', () => {
+								selectedCommit.set(commit);
+								if (this.player) {
+									console.log(`Moving to commit: ${commit.sha}`);
+
+									// The animation
+									this.tweens.add({
+										targets: this.player,
+										x: star.x,
+										y: star.y - 20,
+										duration: 400,
+										ease: 'Power2'
+									});
+								}
+							});
+
+							// Add the new star to our tracking map
+							this.visibleStars.set(commit.sha, star);
+						}
+					}
+				});
 			}
 
 			update() {
