@@ -6,6 +6,7 @@
 
 	export let commits: GithubCommit[] = [];
 	let GameScene: any;
+	let HudScene: any;
 
 	let game: Phaser.Game | null = null;
 	let gameContainer: HTMLDivElement;
@@ -101,19 +102,55 @@
 
 		const PhaserDefault = (await import('phaser')).default;
 
+		// --- 1. DEFINE THE NEW HUD SCENE ---
+		HudScene = class extends PhaserDefault.Scene {
+			starfield: Phaser.GameObjects.TileSprite | null = null;
+
+			constructor() {
+				super({ key: 'HudScene' });
+			}
+
+			preload() {
+				this.load.image('starfield', '/starfield.png');
+			}
+
+			create() {
+				// Create the background. Its camera will never move.
+				this.starfield = this.add.tileSprite(
+					this.scale.width / 2,
+					this.scale.height / 2,
+					this.scale.width,
+					this.scale.height,
+					'starfield'
+				);
+
+				// Listen for resize events to keep the background perfectly filling the screen
+				this.scale.on('resize', (gameSize) => {
+					if (this.starfield) {
+						this.starfield.setSize(gameSize.width, gameSize.height);
+						this.starfield.setPosition(gameSize.width / 2, gameSize.height / 2);
+					}
+				});
+			}
+
+			update() {
+				if (this.starfield) {
+					this.starfield.tilePositionX += 0.2; // A slower, more cinematic scroll
+				}
+			}
+		};
+
 		// I HATE JS :HEAVYSOB:
 		GameScene = class extends PhaserDefault.Scene {
 			// commitData: GithubCommit[];
 
-			starfield: Phaser.GameObjects.TileSprite | null = null;
+			// starfield: Phaser.GameObjects.TileSprite | null = null;
 			player: Phaser.GameObjects.Sprite | null = null;
 			visibleStars: Map<string, Phaser.GameObjects.Arc> = new Map();
 			visibleLines: Phaser.GameObjects.Graphics | null = null;
-
 			positionedCommits: Map<string, { commit: GithubCommit; x: number; y: number }> = new Map();
 
 			preload() {
-				this.load.image('starfield', '/starfield.png');
 				this.load.image('ship', '/ship.png');
 			}
 
@@ -127,17 +164,19 @@
 			}
 
 			create() {
-				this.starfield = this.add.tileSprite(
-					this.scale.width / 2,
-					this.scale.height / 2,
-					this.scale.width,
-					this.scale.height,
-					'starfield'
-				);
+				// this.starfield = this.add.tileSprite(
+				// 	this.scale.width / 2,
+				// 	this.scale.height / 2,
+				// 	this.scale.width,
+				// 	this.scale.height,
+				// 	'starfield'
+				// );
 
 				this.visibleLines = this.add.graphics();
-				this.cameras.main.setBackgroundColor('#000000');
-				let firstNode = null;
+				this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
+				let firstNode: { commit: GithubCommit; x: number; y: number } | null = null;
+
+				// this.starfield.setScrollFactor(0);
 
 				if (this.positionedCommits.size > 0) {
 					let lowestX = Infinity;
@@ -185,9 +224,6 @@
 				}
 
 				// Set up the trigger and perform the initial draw
-				this.cameras.main.on('move', () => this.updateVisibleObjects());
-				this.updateVisibleObjects();
-
 				this.cameras.main.on('move', () => this.updateVisibleObjects());
 
 				// background Rendering Stuff
@@ -266,11 +302,11 @@
 				});
 			}
 
-			update() {
-				if (this.starfield) {
-					this.starfield.tilePositionX += 0.5;
-				}
-			}
+			// update() {
+			// 	if (this.starfield) {
+			// 		this.starfield.tilePositionX += 0.5;
+			// 	}
+			// }
 		};
 
 		const canvasHeight = targetDiv.clientHeight || 600;
@@ -284,12 +320,13 @@
 				mode: PhaserDefault.Scale.RESIZE
 			},
 			parent: targetDiv,
-			backgroundColor: '#000000',
-			scene: GameScene
+			transparent: true
 		};
 
 		game = new PhaserDefault.Game(config);
-		game.scene.start('GameScene', { positionedCommits: positionedCommits });
+		game.scene.add('HudScene', HudScene, true);
+		game.scene.add('GameScene', GameScene, true, { positionedCommits: positionedCommits });
+		game.scene.bringToTop('GameScene');
 	};
 
 	$: if (commits && gameContainer) {
