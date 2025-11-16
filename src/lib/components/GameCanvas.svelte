@@ -125,7 +125,7 @@
 				);
 
 				// Listen for resize events to keep the background perfectly filling the screen
-				this.scale.on('resize', (gameSize) => {
+				this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
 					if (this.starfield) {
 						this.starfield.setSize(gameSize.width, gameSize.height);
 						this.starfield.setPosition(gameSize.width / 2, gameSize.height / 2);
@@ -197,20 +197,29 @@
 					this.cameras.main.setBounds(0, 0, maxX + 200, maxY + 200);
 
 					if (firstNode) {
-						this.player = this.add.sprite(firstNode.x, firstNode.y - 30, 'ship'); //WHY THE FUCK WON'T THIS ERROR
+						this.player = this.add.sprite(firstNode.x, firstNode.y - 30, 'ship'); //WHY THE FUCK WON'T THIS ERROR GO!
 						this.player.setAngle(0);
 						this.player.setScale(0.6);
 					}
 				}
 
-				this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
-					const newZoom = this.cameras.main.zoom - deltaY * 0.0015;
-					this.cameras.main.zoom = Phaser.Math.Clamp(newZoom, 0.2, 2.5);
+				this.input.on(
+					'wheel',
+					(
+						pointer: Phaser.Input.Pointer,
+						gameObjects: Phaser.GameObjects.GameObject[],
+						deltaX: number,
+						deltaY: number,
+						deltaZ: number
+					) => {
+						const newZoom = this.cameras.main.zoom - deltaY * 0.0015;
+						this.cameras.main.zoom = Phaser.Math.Clamp(newZoom, 0.2, 2.5);
 
-					this.updateVisibleObjects();
-				});
+						this.updateVisibleObjects();
+					}
+				);
 
-				this.input.on('pointermove', (pointer) => {
+				this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
 					if (!pointer.isDown) return;
 
 					this.cameras.main.scrollX -=
@@ -303,7 +312,7 @@
 			}
 
 			update() {
-				this.updateVisibleObjects()
+				this.updateVisibleObjects();
 			}
 		};
 
