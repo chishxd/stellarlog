@@ -194,6 +194,8 @@
 						if (node.y > maxY) maxY = node.y;
 					});
 
+					const worldHeight = Math.max(this.scale.height, maxY + 200);
+
 					this.cameras.main.setBounds(0, 0, maxX + 200, maxY + 200);
 
 					if (firstNode) {
@@ -227,6 +229,8 @@
 						(pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
 					this.cameras.main.scrollY -=
 						(pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+
+					this.updateVisibleObjects();
 				});
 
 				if (firstNode) {
