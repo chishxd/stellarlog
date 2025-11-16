@@ -139,19 +139,19 @@
 				this.cameras.main.setBackgroundColor('#000000');
 
 				if (this.positionedCommits.size > 0) {
-					let startNode: { commit: GithubCommit; x: number; y: number } | undefined = undefined;
-					let highestX = -Infinity;
+					let firstNode: { commit: GithubCommit; x: number; y: number } | undefined = undefined;
+					let lowestX = Infinity;
 					this.positionedCommits.forEach((node) => {
-						if (node.x > highestX) {
-							highestX = node.x;
-							startNode = node;
+						if (node.x < lowestX) {
+							lowestX = node.x;
+							firstNode = node;
 						}
 					});
 
-					if (startNode) {
+					if (firstNode) {
 						// This is your correct player creation logic
-						this.player = this.add.sprite(startNode.x, startNode.y - 20, 'ship');
-						this.player.setAngle(180);
+						this.player = this.add.sprite(firstNode.x, firstNode.y - 30, 'ship');
+						this.player.setAngle(0);
 						this.player.setScale(0.6);
 					}
 				}
