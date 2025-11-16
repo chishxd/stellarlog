@@ -10,6 +10,7 @@
 
 import type { GithubCommit } from '$lib/types';
 import { GITHUB_TOKEN } from '$env/static/private';
+import type { PageServerLoad } from './$types';
 
 /**
  * SvelteKit's load function that fetches commit data based on URL query
@@ -17,7 +18,7 @@ import { GITHUB_TOKEN } from '$env/static/private';
  * @param {URL} event.url - Contains the URL of the current request, including search parameters.
  * @returns {Promise<{commits: GithubCommit[], error: string | null}>}
  */
-export const load = async ({
+export const load: PageServerLoad = async ({
 	url
 }: {
 	url: URL;
@@ -50,20 +51,34 @@ export const load = async ({
 		// Build url for API and fetch commit data
 		const listApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?per_page=50`;
 		const listResponse = await fetch(listApiUrl, { headers });
-		
+
 		if (!listResponse.ok) {
 			return { commits: [], error: `Failed to fetch data: ${listResponse.statusText}` };
 		}
 		const commitList = (await listResponse.json()) as { sha: string }[];
 
-		const commitPromises = commitList.map(async (items) => {
-			const detailApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${items.sha}`;
-			return fetch(detailApiUrl, { headers }).then((res) => res.json());
-		});
+		const allCommitStats: GithubCommit[] = [];
+		const batchSize = 10;
 
-		const commitStats = (await Promise.all(commitPromises)) as GithubCommit[];
+		for (let i = 0; i < commitList.length; i += batchSize) {
+			const batch = commitList.slice(i, i + batchSize);
 
-		return { commits: commitStats, error: null };
+			const batchPromises = batch.map(async (item) => {
+				const detailApiUrl = `https://api.github.com/repos/${owner}/${repo}/commits/${item.sha}`;
+				return fetch(detailApiUrl, { headers }).then((res) => {
+					if (!res.ok) {
+						throw new Error(`Failed to fetch commit ${item.sha}: ${res.statusText}`);
+					}
+					return res.json();
+				});
+			});
+
+			const batchResults = await Promise.all(batchPromises);
+
+			allCommitStats.push(...batchResults);
+		}
+
+		return { commits: allCommitStats, error: null };
 	} catch (e: any) {
 		return { commits: [], error: e.message || 'Unknown Error occured' };
 	}
