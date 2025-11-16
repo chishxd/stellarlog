@@ -3,7 +3,6 @@
 	import { onDestroy } from 'svelte';
 	// import Phaser from 'phaser';
 	import { selectedCommit } from '$lib/stores';
-	import { time } from 'console';
 
 	export let commits: GithubCommit[] = [];
 	let GameScene: any;
@@ -22,11 +21,13 @@
 
 			// Find a commit that fits this lane
 			// A commit fits the lane if it's parent is at end of the lane
-			for (let i = 0; i < lanes.length; i++) {
-				if (lanes[i] === commit.parents[0].sha) {
-					lanes[i] = commit.sha;
-					assignedLane = i;
-					break;
+			if (commit.parents.length > 0) {
+				for (let i = 0; i < lanes.length; i++) {
+					if (lanes[i] === commit.parents[0].sha) {
+						lanes[i] = commit.sha;
+						assignedLane = i;
+						break;
+					}
 				}
 			}
 
@@ -78,10 +79,12 @@
 
 		// I HATE JS :HEAVYSOB:
 		GameScene = class extends PhaserDefault.Scene {
-			commitData: GithubCommit[];
+			// commitData: GithubCommit[];
 
 			starfield: Phaser.GameObjects.TileSprite | null = null;
 			player: Phaser.GameObjects.Sprite | null = null;
+
+			positionedCommits: Map<string, { commit: GithubCommit; x: number; y: number }> = new Map();
 
 			preload() {
 				this.load.image('starfield', '/starfield.png');
@@ -90,11 +93,14 @@
 
 			constructor() {
 				super({ key: 'GameScene' });
-				this.commitData = [];
+				// this.commitData = [];
 			}
-			init(data: { commits: GithubCommit[] }) {
-				this.commitData = data.commits;
+			init(data: {
+				positionedCommits: Map<string, { commit: GithubCommit; x: number; y: number }>;
+			}) {
+				this.positionedCommits = data.positionedCommits;
 			}
+
 			create() {
 				this.starfield = this.add.tileSprite(
 					this.scale.width / 2,
@@ -104,15 +110,25 @@
 					'starfield'
 				);
 
-				// Basic Stuff
+				// background Rendering Stuff
 				this.cameras.main.setBackgroundColor('#000000');
 				const startX = 50;
-				const spacingX = (this.scale.width - 100) / this.commitData.length;
+				const spacingX = (this.scale.width - 100) / this.positionedCommits.size;
+
+				const graphics = this.add.graphics({ lineStyle: { width: 1, color: 0x444444 } });
 
 				// Logic to render stars
-				this.commitData.forEach((commit, index) => {
-					const x = startX + index * spacingX;
-					const y = PhaserDefault.Math.Between(this.scale.height * 0.2, this.scale.height * 0.8);
+				this.positionedCommits.forEach(({ commit, x, y }) => {
+					// const x = startX + index * spacingX;
+					// const y = PhaserDefault.Math.Between(this.scale.height * 0.2, this.scale.height * 0.8);
+
+					commit.parents.forEach((parent) => {
+						const parentNode = this.positionedCommits.get(parent.sha);
+						if (parentNode) {
+							graphics.lineBetween(x, y, parentNode.x, parentNode.y);
+						}
+					});
+
 					const totalChanges = commit.stats.total;
 					const cappedChanges = Math.min(totalChanges, 500);
 
@@ -144,7 +160,7 @@
 					}
 
 					const hitArea = new PhaserDefault.Geom.Circle(0, 0, 15);
-					star.setInteractive('hitArea', PhaserDefault.Geom.Circle.Contains);
+					star.setInteractive(hitArea, PhaserDefault.Geom.Circle.Contains);
 
 					star.on('pointerdown', () => {
 						selectedCommit.set(commit);
@@ -163,7 +179,7 @@
 					});
 				});
 
-				if (this.commitData.length > 0) {
+				if (this.positionedCommits.size > 0) {
 					const lastCommit = 0;
 					const startX = 50 + lastCommit * 15;
 					const startY = 250;
@@ -192,8 +208,10 @@
 			scene: GameScene
 		};
 
+		const positionedCommits = layoutCommitGraph(commitData);
+
 		game = new PhaserDefault.Game(config);
-		game.scene.start('GameScene', { commits: commitData });
+		game.scene.start('GameScene', { positionedCommits: positionedCommits });
 	};
 
 	$: if (commits && gameContainer) {
