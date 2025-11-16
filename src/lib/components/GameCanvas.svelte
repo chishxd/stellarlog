@@ -50,8 +50,8 @@
 
 			positionedCommits.set(commit.sha, {
 				commit,
-				x: 50 + assignedLane * 40,
-				y: 50 + timeIndex * 30
+				x: 50 + timeIndex * 50,
+				y: 50 + assignedLane * 40
 			});
 
 			if (commit.parents.length > 0) {
