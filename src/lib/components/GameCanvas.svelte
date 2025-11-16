@@ -302,11 +302,9 @@
 				});
 			}
 
-			// update() {
-			// 	if (this.starfield) {
-			// 		this.starfield.tilePositionX += 0.5;
-			// 	}
-			// }
+			update() {
+				this.updateVisibleObjects()
+			}
 		};
 
 		const canvasHeight = targetDiv.clientHeight || 600;
