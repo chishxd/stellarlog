@@ -145,9 +145,9 @@
 			// commitData: GithubCommit[];
 
 			// starfield: Phaser.GameObjects.TileSprite | null = null;
-			player: Phaser.GameObjects.Sprite | null = null;
-			visibleStars: Map<string, Phaser.GameObjects.Arc> = new Map();
-			visibleLines: Phaser.GameObjects.Graphics | null = null;
+			player: any = null;
+			visibleStars: Map<string, any> = new Map();
+			visibleLines: any = null;
 			positionedCommits: Map<string, { commit: GithubCommit; x: number; y: number }> = new Map();
 
 			preload() {
@@ -174,7 +174,7 @@
 
 				this.visibleLines = this.add.graphics();
 				this.cameras.main.setBackgroundColor('rgba(0,0,0,0)');
-				let firstNode: { commit: GithubCommit; x: number; y: number } | null = null;
+				let firstNode: { commit: GithubCommit; x: number; y: number } | undefined = undefined;
 
 				// this.starfield.setScrollFactor(0);
 
@@ -197,7 +197,8 @@
 					this.cameras.main.setBounds(0, 0, maxX + 200, maxY + 200);
 
 					if (firstNode) {
-						this.player = this.add.sprite(firstNode.x, firstNode.y - 30, 'ship'); //WHY THE FUCK WON'T THIS ERROR GO!
+						const node = firstNode as { commit: GithubCommit; x: number; y: number };
+						this.player = this.add.sprite(node.x, node.y - 30, 'ship');
 						this.player.setAngle(0);
 						this.player.setScale(0.6);
 					}
@@ -229,7 +230,8 @@
 				});
 
 				if (firstNode) {
-					this.cameras.main.centerOn(firstNode.x, firstNode.y);
+					const node = firstNode as { commit: GithubCommit; x: number; y: number };
+					this.cameras.main.centerOn(node.x, node.y);
 				}
 
 				// Set up the trigger and perform the initial draw
