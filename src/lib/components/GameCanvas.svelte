@@ -2,6 +2,7 @@
 	import type { GithubCommit } from '$lib/types';
 	import { onDestroy } from 'svelte';
 	import type Phaser from 'phaser';
+	import { selectedCommit } from '$lib/stores';
 
 	export let commits: GithubCommit[] = [];
 	let GameScene: any;
@@ -61,8 +62,11 @@
 					star.setInteractive({ useHandCursor: true });
 
 					star.on('pointerdown', () => {
+						selectedCommit.set(commit);
 						if (this.player) {
 							console.log(`Moving to commit: ${commit.sha}`);
+
+							// The animation
 							this.tweens.add({
 								targets: this.player,
 								x: star.x,

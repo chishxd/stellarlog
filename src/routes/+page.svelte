@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CommitInfo from '$lib/components/CommitInfo.svelte';
 	import GameCanvas from '$lib/components/GameCanvas.svelte';
 
 	export let data;
@@ -25,3 +26,5 @@
 {:else if !data?.error && data?.commits}
 	<p>No commits found. Try a different repository.</p>
 {/if}
+
+<CommitInfo />
